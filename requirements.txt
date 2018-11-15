@@ -1,0 +1,4 @@
+Flask==1.0.2
+-e "git+https://github.com/Microkubes/microkubes-python#egg=microkubes-python"
+mongoengine==0.16.0
+flasgger==0.9.1
