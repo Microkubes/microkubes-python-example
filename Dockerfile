@@ -6,9 +6,7 @@ ADD . /
 
 RUN pip install -r requirements.txt
 
-ENV API_GATEWAY_URL=http://localhost:8001
+ENV API_GATEWAY_URL=http://kong-admin:8001
 ENV FLASK_APP=service.py
-
-EXPOSE 5000
 
 CMD [ "flask", "run" ]
