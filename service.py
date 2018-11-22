@@ -22,7 +22,7 @@ registrator = KongGatewayRegistrator(os.environ.get("API_GATEWAY_URL", "http://l
 # Self-registration on the API Gateway must be the first thing we do when running this service.
 # If the registration fails, then the whole service must terminate.
 registrator.register(name="microservice-python-example",                  # the service name.
-                     paths=["/todos"],                      # URL pattern that Kong will use to redirect requests to out service
+                     paths=["/"],                      # URL pattern that Kong will use to redirect requests to out service
                      host="microservice-python-example.service.consul",  # The hostname of the service.
                      port=5000)                             # Flask default port. When redirecting, Kong will call us on this port.
 
