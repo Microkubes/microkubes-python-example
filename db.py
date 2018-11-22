@@ -8,7 +8,7 @@ import os
 class DB:
     def __init__(self):
         db_name = os.environ.get("DB_NAME", "todos")
-        connect(db_name, host="localhost", port=27017, username="admin", password="admin", authentication_source="admin")
+        connect(db_name, host="mongo", port=27017, username="admin", password="admin", authentication_source="admin")
 
     def createTodo(self, payload):
         newTodo = Todo(
