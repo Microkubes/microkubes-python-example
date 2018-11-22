@@ -4,37 +4,60 @@ This is an example of a microservice for managing todos written in Python using 
 
 ### Installation
 
-First make sure that the Microkubes platform is up and running. Follow the instructions [here](https://github.com/Microkubes/microkubes) on how to setup Microkubes.
+First make sure that the Microkubes platform is deployed with Kubernetes and up and running. Follow the instructions [here](https://github.com/Microkubes/microkubes) on how to setup Microkubes with Kubernetes.
 
 To install the microservice, first you have to build an image with Docker:
 
 ```
-docker build -t microkubes/microkubes-python-example .
+docker build -t microkubes/microservice-python-example .
 ```
 
-Then, in the [microkubes](https://github.com/Microkubes/microkubes) repo, in the       [docker-compose.fullstack.yml](https://github.com/Microkubes/microkubes/blob/master/docker/docker-compose.fullstack.yml) file,
-add the `microkubes-python-example` service:
+Then, in the [microkubes](https://github.com/Microkubes/microkubes) repo, in the       [microkubes.yaml](https://github.com/Microkubes/microkubes/blob/master/kubernetes/manifests/microkubes.yaml) file,
+add the following at the bottom:
 
 ```
-microkubes-python-example:
-    image: microkubes/microkubes-python-example:latest
-    environment:
-        - API_GATEWAY_URL=http://kong:8001
-        - MONGO_URL=mongo:27017
-    deploy:
-        restart_policy:
-            condition: on-failure
-    secrets:
-        - public.pub
-        - service.key
-        - service.cert
-        - system
-        - default
-        - system.pub
-        - default.pub
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: microservice-python-example
+  namespace: microkubes
+  labels:
+    app: microservice-python-example
+    platform: microkubes
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: microservice-python-example
+      labels:
+        app: microservice-python-example
+        platform: microkubes
+      annotations:
+        consul.register/enabled: "true"
+        consul.register/service.name: "microservice-python-example"
+    spec:
+      containers:
+        - name: microservice-python-example
+          image: microkubes/microservice-python-example:latest
+          imagePullPolicy: Never
+          env:
+            - name: SERVICE_CONFIG_FILE
+              value: /config.json
+            - name: API_GATEWAY_URL
+              value: "http://kong-admin:8001"
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: microkubes-secrets
+              mountPath: /run/secrets
+      volumes:
+        - name: microkubes-secrets
+          secret:
+            secretName: microkubes-secrets
 ```
 
-After that, in [.env](https://github.com/Microkubes/microkubes/blob/master/docker/.env) add the following environment variables for Mongo database:
+After that, in [.env](https://github.com/Microkubes/microkubes/blob/master/kubernetes/manifests/mongo/.env) add the following environment variables for Mongo database:
 
 ```
 MS_TODO_DB=todos
@@ -42,13 +65,32 @@ MS_TODO_USER=restapi
 MS_TODO_PWD=restapi
 ```
 
-Next, in [create_db_objects.sh](https://github.com/Microkubes/microkubes/blob/master/docker/mongo/create_db_objects.sh) add the following line at the end to create the database for todos:
+Next, in [create_microkubes_db_objects.sh](https://github.com/Microkubes/microkubes/blob/master/kubernetes/manifests/mongo/create_microkubes_db_objects.sh) add the following line at the end to create the database for todos:
 
 ```
 mongo  -u admin -p admin --authenticationDatabase admin "$MS_TODO_DB" --eval "db.createUser({user: '$MS_TODO_USER', pwd: '$MS_TODO_PWD', roles: [{role: 'dbOwner', db: '$MS_TODO_DB'}]});"
 ```
 
-Finally, redeploy the Microkubes stack and check if the service is running using `docker service ls`.
+Next thing to do is to update [values.yaml] (https://github.com/Microkubes/microkubes/blob/master/kubernetes/helm/microkubes/values.yaml).
+Add the following code right after the declared variable for `User profile`:
+
+```
+# Microkubes Python example
+  microservicepythonexample:
+    name: microservice-python-example
+    serviceConfigPath: /etc/config/config.json
+
+  image:
+    repository: microkubes/microservice-python-example
+    tag: latest
+    pullPolicy: Never
+
+  podAnnotations:
+    consul.register/enabled: "true"
+    consul.register/service.name: "microservice-python-example"
+```
+
+Finally, redeploy the Microkubes stack with Kubernetes and check if the service is running using `kubectl -n microkubes get pods`.
 
 ### API documentation
 
