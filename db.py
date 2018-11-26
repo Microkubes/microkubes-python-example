@@ -3,17 +3,24 @@ from model import Todo
 import json
 import datetime
 import os
+from service import sec
 
 
 class DB:
     def __init__(self):
         db_name = os.environ.get("DB_NAME", "todos")
-        connect(db_name, host="mongo", port=27017, username="admin", password="admin", authentication_source="admin")
+
+        if os.environ.get("FLASK_ENV", "development") != "testing":
+            connect(db_name, host="mongo", port=27017, username="admin", password="admin", authentication_source="admin")
+        else:
+            connect(db_name, host="localhost", port=27017)
 
     def createTodo(self, payload):
+        auth = sec.context.get_auth()
         newTodo = Todo(
             title=payload.get("title"),
-            description=payload.get("description")
+            description=payload.get("description"),
+            createdBy=auth.user_id
         )
         try:
             newTodo.save()

@@ -1,31 +1,32 @@
 import os
 from flask import Flask
 from microkubes.gateway import KongGatewayRegistrator
-from db import DB
 from flask import request
 import json
-# from microkubes.security import FlaskSecurity
+from microkubes.security import FlaskSecurity
 from flasgger import Swagger
 
 app = Flask(__name__)
 Swagger(app)
 
-registrator = KongGatewayRegistrator(os.environ.get("API_GATEWAY_URL", "http://localhost:8001"))  # Use the Kong registrator for Microkubes
 
 # set up a security chain
-# sec = (FlaskSecurity().
-#         keys_dir("./keys").   # set up a key-store that has at least the public keys from the platform
-#         jwt().                # Add JWT support
-#         oauth2().             # Add OAuth2 support
-#         build())              # Build the security for Flask
+sec = (FlaskSecurity().
+        keys_dir("./keys").   # set up a key-store that has at least the public keys from the platform
+        jwt().                # Add JWT support
+        oauth2().             # Add OAuth2 support
+        build())              # Build the security for Flask
 
-# Self-registration on the API Gateway must be the first thing we do when running this service.
-# If the registration fails, then the whole service must terminate.
-registrator.register(name="microservice-python-example",                  # the service name.
-                     paths=["/"],                      # URL pattern that Kong will use to redirect requests to out service
-                     host="microservice-python-example.service.consul",  # The hostname of the service.
-                     port=5000)                             # Flask default port. When redirecting, Kong will call us on this port.
+if os.environ.get("FLASK_ENV", "development") != "testing":
+    registrator = KongGatewayRegistrator(os.environ.get("API_GATEWAY_URL", "http://localhost:8001"))  # Use the Kong registrator for Microkubes
+    # Self-registration on the API Gateway must be the first thing we do when running this service.
+    # If the registration fails, then the whole service must terminate.
+    registrator.register(name="microservice-python-example",                  # the service name.
+                        paths=["/"],                      # URL pattern that Kong will use to redirect requests to out service
+                        host="microservice-python-example.service.consul",  # The hostname of the service.
+                        port=5000)                             # Flask default port. When redirecting, Kong will call us on this port.
 
+from db import DB
 db = DB()
  
 @app.route("/todos", methods=["GET"])
@@ -116,6 +117,7 @@ def todos():
     return listTodos
 
 @app.route("/todos", methods=["POST"])
+@sec.secured   # this action is now secure
 def createTodo():
     """
     This is the API for creating todos.
@@ -226,6 +228,7 @@ def getTodoById(todoId):
     return existingTodo
 
 @app.route("/todos/<todoId>", methods=["DELETE"])
+@sec.secured   # this action is now secure
 def deleteTodo(todoId):
     """
     This is the todo deleting API.
@@ -280,6 +283,7 @@ def deleteTodo(todoId):
     return deletedTodo
 
 @app.route("/todos/<todoId>", methods=["PUT", "PATCH"])
+@sec.secured   # this action is now secure
 def updateTodo(todoId):
     """
     This is the todo updating API using the todo ID.
