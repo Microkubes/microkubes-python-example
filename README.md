@@ -118,4 +118,5 @@ MongoEngine is a Python Object-Document Mapper for working with MongoDB.
 
 ### Tests
 
-To run the tests type `DB_NAME="todos_test" python test_service.py`.
+Prior running the tests, make sure that you have a running MongoDB instance on localhost:27017.
+To run the tests type `DB_NAME="todos_test" FLASK_ENV="testing" python test_service.py`.
