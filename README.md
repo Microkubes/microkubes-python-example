@@ -123,4 +123,4 @@ To run the tests type `DB_NAME="todos_test" FLASK_ENV="testing" python test_serv
 
 ## Contributing
 
- For contributing to this repository or its documentation, see the [Contributing guidelines (CONTRIBUTING.md).
+ For contributing to this repository or its documentation, see the [Contributing guidelines](CONTRIBUTING.md).
